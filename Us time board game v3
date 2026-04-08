@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Us Time — לוח המשחק לזוגות</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --pink:#D4537E;--pink-d:#993556;--pink-l:#FBEAF0;--pink-b:#F4C0D1;
+  --blue:#378ADD;--blue-l:#E6F1FB;
+  --red:#E24B4A;--red-l:#FCEBEB;
+  --amber:#EF9F27;--teal:#1D9E75;--purple:#7F77DD;--gold:#FAC775;
+  --text:#1a1a1a;--text2:#666;--text3:#999;
+  --bg:#fafaf8;--surf:#fff;--surf2:#f4f2ee;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.18);
+  --rad:10px;--rad-lg:16px;--rad-xl:22px;
+  --shadow:0 4px 20px rgba(0,0,0,.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+.page{width:100%;max-width:480px;padding:20px 18px 80px;}
+.sc{display:none;}.sc.on{display:block;}
+#s-penalty.on{display:flex;}
+
+/* ---- SETUP ---- */
+.brand{text-align:center;padding:1.5rem 0 1.5rem;}
+.logo-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--pink);background:var(--pink-l);padding:4px 12px;border-radius:99px;margin-bottom:12px;}
+.brand h1{font-size:28px;font-weight:800;letter-spacing:-.8px;}
+.brand p{font-size:14px;color:var(--text2);margin-top:6px;line-height:1.5;}
+.sec-lbl{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;margin-top:1.25rem;}
+.inp-row{display:flex;gap:10px;}
+.ing{flex:1;}
+.ing label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;}
+.ing input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--rad);background:var(--surf);color:var(--text);font-size:15px;outline:none;transition:border-color .15s;}
+.ing input:focus{border-color:var(--pink);}
+.mode-wrap{display:flex;background:var(--surf2);border-radius:var(--rad-lg);padding:4px;gap:4px;}
+.mode-btn{flex:1;padding:10px;border:none;border-radius:var(--rad);background:transparent;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.mode-btn.active{background:var(--surf);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.legend{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.leg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);}
+.leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.rules-box{background:var(--surf);border:1.5px solid var(--border);border-radius:var(--rad-lg);padding:1rem 1.25rem;}
+.rules-box h3{font-size:13px;font-weight:700;margin-bottom:10px;}
+.rule{display:flex;gap:10px;font-size:12px;color:var(--text2);margin-bottom:7px;line-height:1.45;}
+.rule-ico{font-size:14px;flex-shrink:0;}
+.start-btn{width:100%;padding:17px;margin-top:1.5rem;border-radius:var(--rad-lg);background:var(--pink);color:#fff;border:none;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(212,83,126,.35);transition:all .15s;letter-spacing:-.3px;}
+.start-btn:hover{background:var(--pink-d);transform:translateY(-1px);}
+
+/* ---- SCOREBOARD ---- */
+.sboard{display:flex;gap:8px;margin-bottom:10px;}
+.ps-wrap{flex:1;position:relative;}
+.ps{border-radius:var(--rad-lg);padding:11px 8px;text-align:center;background:var(--surf2);border:2px solid transparent;transition:all .25s;}
+.ps.t1{border-color:var(--pink);background:var(--pink-l);}
+.ps.t2{border-color:var(--blue);background:var(--blue-l);}
+.ps-name{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;}
+.ps-n{font-size:26px;font-weight:800;color:var(--text);line-height:1;}
+.ps-meta{font-size:11px;color:var(--text3);margin-top:2px;min-height:14px;}
+.score-anim{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:18px;font-weight:800;color:var(--pink);pointer-events:none;animation:floatUp .85s ease-out forwards;z-index:10;}
+@keyframes floatUp{from{opacity:1;transform:translateX(-50%) translateY(0);}to{opacity:0;transform:translateX(-50%) translateY(-44px);}}
+
+/* ---- GAME ---- */
+.turn-line{text-align:center;font-size:14px;color:var(--text2);margin-bottom:8px;}
+.turn-line b{color:var(--text);font-weight:700;}
+.round-info{text-align:center;font-size:12px;color:var(--text3);margin-bottom:8px;}
+.rtrack{display:flex;justify-content:center;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
+.rdo{width:9px;height:9px;border-radius:50%;background:var(--surf2);border:1.5px solid var(--border);flex-shrink:0;transition:all .3s;}
+.rdo.p1{background:var(--pink);border-color:var(--pink);}
+.rdo.p2{background:var(--blue);border-color:var(--blue);}
+.rdo.cur{outline:2.5px solid var(--border2);outline-offset:1px;}
+
+/* ---- WHEEL ---- */
+.warea{display:flex;flex-direction:column;align-items:center;margin-bottom:10px;}
+.ptr{font-size:20px;line-height:1;margin-bottom:-5px;z-index:1;}
+#wc{border-radius:50%;box-shadow:0 6px 28px rgba(0,0,0,.15);}
+.spin-btn{margin-top:14px;padding:14px 48px;background:var(--pink);color:#fff;border:none;border-radius:var(--rad-lg);font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 5px 16px rgba(212,83,126,.35);transition:all .15s;}
+.spin-btn:hover{background:var(--pink-d);}
+.spin-btn:disabled{background:var(--surf2);color:var(--text3);box-shadow:none;cursor:default;}
+.landed-badge{text-align:center;font-size:14px;font-weight:600;color:var(--text2);min-height:22px;margin-top:8px;}
+
+/* ---- CARD ---- */
+.crd{background:var(--surf);border-radius:var(--rad-xl);border:2px solid var(--border);box-shadow:var(--shadow);padding:2rem 1.5rem;text-align:center;min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;margin-bottom:14px;transition:border-color .3s;animation:popIn .3s ease-out;}
+@keyframes popIn{from{transform:scale(.92);opacity:0;}to{transform:scale(1);opacity:1;}}
+.cbadge{font-size:12px;font-weight:700;padding:5px 14px;border-radius:99px;letter-spacing:.3px;}
+.spicy-pill{display:inline-block;font-size:10px;background:#FF4500;color:#fff;padding:1px 7px;border-radius:99px;margin-left:4px;font-weight:700;}
+.cicon{font-size:30px;line-height:1;}
+.ctext{font-size:18px;font-weight:700;color:var(--text);line-height:1.5;}
+.csub{font-size:13px;color:var(--text2);font-style:italic;}
+.wopts{display:flex;flex-direction:column;gap:8px;width:100%;}
+.wopt{padding:12px 16px;border-radius:var(--rad);border:1.5px solid var(--border);background:var(--surf2);font-size:14px;color:var(--text);text-align:center;}
+.vs{font-size:13px;font-weight:700;color:var(--text3);}
+.hs-timer{position:relative;width:84px;height:84px;}
+.hs-timer svg{position:absolute;top:0;left:0;}
+.hs-tnum{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;}
+.hs-tsub{text-align:center;font-size:11px;color:var(--text3);margin-top:4px;}
+.arow{display:flex;gap:10px;}
+.done-btn{flex:2;padding:15px;background:var(--pink);color:#fff;border:none;border-radius:var(--rad-lg);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(212,83,126,.3);transition:background .15s;}
+.done-btn:hover{background:var(--pink-d);}
+.skip-b{flex:1;padding:15px;background:var(--surf2);color:var(--text2);border:1.5px solid var(--border);border-radius:var(--rad-lg);font-size:14px;cursor:pointer;transition:all .15s;}
+.skip-b:hover{background:var(--surf);}
+
+/* ---- PENALTY ---- */
+#s-penalty{
+  min-height:100vh;flex-direction:column;align-items:center;justify-content:center;
+  padding:2rem 1.5rem;text-align:center;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#1a0505 0%,#2d0808 60%,#1f0505 100%);
+}
+.penalty-glow{position:absolute;width:320px;height:320px;border-radius:50%;background:rgba(226,75,74,.14);filter:blur(70px);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+.pen-icon{font-size:78px;margin-bottom:12px;display:block;animation:shakeX .55s ease-in-out;}
+@keyframes shakeX{0%,100%{transform:translateX(0)}15%{transform:translateX(-10px)}45%{transform:translateX(10px)}75%{transform:translateX(-6px)}90%{transform:translateX(6px)}}
+.pen-label{display:inline-block;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#E24B4A;background:rgba(226,75,74,.18);padding:4px 14px;border-radius:99px;margin-bottom:14px;}
+.pen-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:18px;}
+.pen-text{font-size:19px;font-weight:600;color:#fff;line-height:1.65;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);border-radius:var(--rad-xl);padding:1.5rem 1.25rem;margin-bottom:20px;width:100%;max-width:420px;transition:opacity .2s;}
+.pen-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px;}
+.pen-accept{padding:16px;background:var(--pink);color:#fff;border:none;border-radius:var(--rad-lg);font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(212,83,126,.4);transition:all .15s;}
+.pen-accept:hover{background:var(--pink-d);}
+.pen-reroll{padding:12px;background:rgba(255,255,255,.09);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.16);border-radius:var(--rad-lg);font-size:14px;cursor:pointer;transition:all .15s;}
+.pen-reroll:hover{background:rgba(255,255,255,.15);}
+
+/* ---- RESULT ---- */
+.res{text-align:center;padding:1.5rem 0;}
+.res-hero{width:110px;height:110px;border-radius:50%;background:var(--pink-l);display:flex;align-items:center;justify-content:center;font-size:52px;margin:0 auto 20px;box-shadow:0 8px 24px rgba(212,83,126,.2);}
+.res-t{font-size:30px;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.5px;}
+.res-s{font-size:15px;color:var(--text2);margin-bottom:2rem;line-height:1.5;}
+.fscores{display:flex;gap:10px;margin-bottom:2rem;}
+.fsc{flex:1;padding:1.5rem 1rem;background:var(--surf2);border-radius:var(--rad-lg);border:2px solid transparent;text-align:center;transition:all .3s;}
+.fsc.win{border-color:var(--pink);background:var(--pink-l);}
+.fsc-n{font-size:13px;color:var(--text2);margin-bottom:4px;}
+.fsc-p{font-size:42px;font-weight:800;color:var(--text);line-height:1;}
+.fsc-m{font-size:12px;color:var(--text3);margin-top:5px;}
+.again-btn{padding:16px 48px;background:var(--pink);color:#fff;border:none;border-radius:var(--rad-lg);font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(212,83,126,.35);}
+.again-btn:hover{background:var(--pink-d);}
+
+/* ---- TOAST ---- */
+#toast-wrap{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;}
+.toast{background:var(--text);color:#fff;padding:11px 20px;border-radius:99px;font-size:14px;font-weight:600;white-space:nowrap;transform:translateY(-20px);opacity:0;transition:all .3s ease;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.streak{background:var(--amber);color:var(--text);}
+.toast.warn{background:var(--red);}
+.toast.bonus{background:var(--teal);}
+
+/* ---- CONFETTI ---- */
+#confetti-c{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none;}
+
+.footer{text-align:center;font-size:12px;color:var(--text3);margin-top:1.5rem;}
+</style>
+</head>
+<body>
+
+<canvas id="confetti-c"></canvas>
+<div id="toast-wrap"></div>
+
+<div class="page">
+
+<!-- ====== SETUP ====== -->
+<div id="s-setup" class="sc on">
+  <div class="brand">
+    <div class="logo-tag">Us Time</div>
+    <h1>לוח המשחק לזוגות 🎡</h1>
+    <p>סובבו את הגלגל, קבלו קלף, ותחרו<br>6 סוגי קלפים · 12 סיבובים · עונשים!</p>
+  </div>
+
+  <div class="sec-lbl">שמות השחקנים</div>
+  <div class="inp-row">
+    <div class="ing"><label>שחקן 1</label><input id="p1n" type="text" placeholder="השם שלך..." maxlength="10"></div>
+    <div class="ing"><label>שחקן 2</label><input id="p2n" type="text" placeholder="השם שלהם..." maxlength="10"></div>
+  </div>
+
+  <div class="sec-lbl">מצב משחק</div>
+  <div class="mode-wrap">
+    <button id="mode-normal" class="mode-btn active" onclick="setMode('normal')">💌 רגיל</button>
+    <button id="mode-spicy" class="mode-btn" onclick="setMode('spicy')">🌶️ מסעיר</button>
+  </div>
+
+  <div class="sec-lbl">סוגי קלפים</div>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#D4537E"></div>💬 שאלה (2נק')</div>
+    <div class="leg"><div class="leg-dot" style="background:#EF9F27"></div>🎯 אתגר (2נק')</div>
+    <div class="leg"><div class="leg-dot" style="background:#7F77DD"></div>⚡ מעדיף? (2נק')</div>
+    <div class="leg"><div class="leg-dot" style="background:#E24B4A"></div>🔥 מושב חם (3נק')</div>
+    <div class="leg"><div class="leg-dot" style="background:#1D9E75"></div>🧩 זוגון (3נק')</div>
+    <div class="leg"><div class="leg-dot" style="background:#FAC775"></div>⭐ בונוס (4נק')</div>
+  </div>
+
+  <div class="rules-box" style="margin-top:1.25rem">
+    <h3>איך משחקים?</h3>
+    <div class="rule"><span class="rule-ico">🎡</span><span>כל תור — השחקן הנוכחי מסובב את הגלגל</span></div>
+    <div class="rule"><span class="rule-ico">🃏</span><span>הגלגל בוחר סוג קלף אקראי — קראו בקול ועשו!</span></div>
+    <div class="rule"><span class="rule-ico">✅</span><span>השלמתם? קבלו נקודות. דלגתם? קבלו <b>עונש!</b> 🐔</span></div>
+    <div class="rule"><span class="rule-ico">🔥</span><span>3 השלמות ברצף = +1 נקודת בונוס אוטומטית!</span></div>
+    <div class="rule"><span class="rule-ico">🏆</span><span>אחרי 12 סיבובים — הניקוד קובע מי ניצח!</span></div>
+  </div>
+
+  <button class="start-btn" onclick="startGame()">התחילו לשחק! →</button>
+  <div class="footer">Us Time · כל הזכויות שמורות ©</div>
+</div>
+
+<!-- ====== GAME ====== -->
+<div id="s-game" class="sc">
+  <div class="sboard">
+    <div class="ps-wrap" id="pw1"><div class="ps" id="ps1"><div class="ps-name" id="ps1n">שחקן 1</div><div class="ps-n" id="ps1p">0</div><div class="ps-meta" id="ps1m"></div></div></div>
+    <div class="ps-wrap" id="pw2"><div class="ps" id="ps2"><div class="ps-name" id="ps2n">שחקן 2</div><div class="ps-n" id="ps2p">0</div><div class="ps-meta" id="ps2m"></div></div></div>
+  </div>
+  <div class="turn-line">תור של: <b id="tname">-</b></div>
+  <div class="round-info" id="rinfo">סיבוב 1 מתוך 12</div>
+  <div class="rtrack" id="rtrack"></div>
+  <div class="warea">
+    <div class="ptr">▼</div>
+    <canvas id="wc" width="260" height="260"></canvas>
+    <button class="spin-btn" id="spin-btn" onclick="doSpin()">סובבו!</button>
+    <div class="landed-badge" id="landed"></div>
+  </div>
+</div>
+
+<!-- ====== CARD ====== -->
+<div id="s-card" class="sc">
+  <div class="sboard">
+    <div class="ps-wrap" id="cpw1"><div class="ps" id="cp1"><div class="ps-name" id="cp1n">שחקן 1</div><div class="ps-n" id="cp1p">0</div><div class="ps-meta" id="cp1m"></div></div></div>
+    <div class="ps-wrap" id="cpw2"><div class="ps" id="cp2"><div class="ps-name" id="cp2n">שחקן 2</div><div class="ps-n" id="cp2p">0</div><div class="ps-meta" id="cp2m"></div></div></div>
+  </div>
+  <div class="crd" id="crd"></div>
+  <div class="arow">
+    <button class="skip-b" onclick="doSkip()">דלגתי 🐔</button>
+    <button class="done-btn" id="doneb">השלמתי ✓</button>
+  </div>
+</div>
+
+<!-- ====== PENALTY ====== -->
+<div id="s-penalty" class="sc">
+  <div class="penalty-glow"></div>
+  <span id="pen-icon" class="pen-icon">🐔</span>
+  <div class="pen-label">⚠️ עונש!</div>
+  <div class="pen-title">דלגת? אז קבל/י!</div>
+  <div class="pen-text" id="pen-text"></div>
+  <div class="pen-btns">
+    <button class="pen-reroll" onclick="rerollPenalty()">🎲 עונש אחר</button>
+    <button class="pen-accept" onclick="acceptPenalty()">קיבלתי על עצמי ✓</button>
+  </div>
+</div>
+
+<!-- ====== RESULT ====== -->
+<div id="s-result" class="sc">
+  <div class="res">
+    <div class="res-hero" id="ric">🏆</div>
+    <div class="res-t" id="rt">כל הכבוד!</div>
+    <div class="res-s" id="rs">המשחק הסתיים</div>
+    <div class="fscores">
+      <div class="fsc" id="fs1"><div class="fsc-n" id="fs1n">שחקן 1</div><div class="fsc-p" id="fs1p">0</div><div class="fsc-m" id="fs1m"></div></div>
+      <div class="fsc" id="fs2"><div class="fsc-n" id="fs2n">שחקן 2</div><div class="fsc-p" id="fs2p">0</div><div class="fsc-m" id="fs2m"></div></div>
+    </div>
+    <button class="again-btn" onclick="goSetup()">משחק חדש 🔄</button>
+    <div class="footer">Us Time · שיהיה לכם מהנה! ❤️</div>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* ===== DATA ===== */
+const SEGS=[
+  {name:'שאלה',  icon:'💬',bg:'#D4537E',fg:'#fff',   type:'q',pts:2},
+  {name:'אתגר!', icon:'🎯',bg:'#EF9F27',fg:'#412402',type:'d',pts:2},
+  {name:'מעדיף?',icon:'⚡',bg:'#7F77DD',fg:'#fff',   type:'w',pts:2},
+  {name:'מושב חם',icon:'🔥',bg:'#E24B4A',fg:'#fff',  type:'h',pts:3},
+  {name:'זוגון', icon:'🧩',bg:'#1D9E75',fg:'#fff',   type:'z',pts:3},
+  {name:'בונוס', icon:'⭐',bg:'#FAC775',fg:'#412402',type:'b',pts:4},
+];
+
+const CARDS={
+  q:[
+    {t:'מה הדבר שהפרטנר שלך עושה שגורם לך להרגיש הכי אהוב/ה?'},
+    {t:'מה הרגע שבו ידעת שהפרטנר שלך מיוחד/ת לך?'},
+    {t:'מה הפחד הגדול ביותר שלך — ואיך הפרטנר עוזר לך איתו?'},
+    {t:'מה הדבר שהייתי רוצה שנעשה יותר ביחד?',s:'שיחה פתוחה — ענו בכנות'},
+    {t:'אם הייתם שולחים מכתב לעצמכם לפני 10 שנים, מה הייתם כותבים?'},
+    {t:'מה הגרסה הטובה ביותר של עצמך שאתה שואף להיות?'},
+    {t:'מה הדבר שהכי קשה לך לבקש מהפרטנר?',s:'ענו בכנות'},
+    {t:'מה הרגע בחיים שלך שהכי שינה אותך?'},
+    {t:'מה הדבר שאתה נותן לאחרים שקשה לך לתת לעצמך?'},
+    {t:'מה הדבר שהייתי רוצה שתדע עלי אבל קשה לי לומר?'},
+    {t:'מה המשפט שמישהו אמר לך שנשאר אצלך עד היום?'},
+    {t:'מה הדבר שהכי אהבת לעשות כילד/ה שכבר לא עושה?'},
+  ],
+  d:[
+    {t:'חבקו אחד את השני 45 שניות — בשקט מוחלט',s:'כוונו טיימר. אין לדבר!'},
+    {t:'אמרו לפרטנר 5 דברים שאתם אוהבים בו/ה — בפירוט!',s:'אסור לחזור על מה שאמרתם'},
+    {t:'הסתכלו אחד לשני בעיניים 30 שניות',s:'מי ישבור ראשון — מפסיד נקודה!'},
+    {t:'רקדו ביחד 60 שניות — הפרטנר בוחר את השיר',s:'אין תירוצים!'},
+    {t:'שחקו "סיים את המשפט": "כשאני איתך אני מרגיש/ה..." — 3 פעמים כל אחד'},
+    {t:'תנו לפרטנר מסאז\' כתפיים 60 שניות — ואז החליפו!'},
+    {t:'ספרו לפרטנר זיכרון כיף שלא שיתפתם — מהחודש האחרון'},
+    {t:'שרו ביחד את הפסוק הראשון של שיר שאתם שניהם אוהבים'},
+    {t:'צלמו ביחד סלפי כמה שיותר מגוחך ושמרו אותו!'},
+    {t:'כתבו ביחד 3 דברים שתרצו לעשות ביחד השנה',s:'ושמרו את הרשימה!'},
+    {t:'חבקו — ולא משחררים עד שכל אחד אומר דבר אחד שאהב היום'},
+  ],
+  w:[
+    {t:'היית מעדיף:',o:['חופשה ב-Maldives שבועיים','חופשה ב-New York שבוע']},
+    {t:'היית מעדיף:',o:['לדעת את העתיד','לשנות דבר אחד בעבר']},
+    {t:'היית מעדיף:',o:['להיות עשיר בלי אהבה','להיות עני ומאוד אהוב']},
+    {t:'היית מעדיף:',o:['לחיות בעיר גדולה ורועשת','לחיות בכפר שקט בטבע']},
+    {t:'היית מעדיף:',o:['לנסוע לחו"ל פעמיים בשנה','לגור בארץ חדשה כל שנה']},
+    {t:'היית מעדיף:',o:['לדעת כל השפות בעולם','לנגן בכל כלי נגינה']},
+    {t:'היית מעדיף:',o:['להיות מפורסם מאוד','להיות עשיר ואנונימי']},
+    {t:'היית מעדיף:',o:['לחזור להיות ילד שבוע','לזכות לשבוע בגיל 70']},
+    {t:'היית מעדיף:',o:['עבודת חלומות בכסף ממוצע','משכורת גבוהה בעבודה מעיקה']},
+    {t:'היית מעדיף:',o:['לחיות 100 שנה בבריאות','לחיות 65 שנה בשיא האושר']},
+    {t:'היית מעדיף:',o:['הרבה חברים שטחיים','3 חברים אמיתיים בלבד']},
+  ],
+  h:[
+    {t:'מושב החם! 30 שניות — הפרטנר שואל שאלות כן/לא במהירות',s:'5+ תשובות נכון = 3 נקודות!'},
+    {t:'30 שניות: ספרו ביחד כמה שיותר זיכרונות משותפים',s:'כל זיכרון = נקודה'},
+    {t:'30 שניות: הפרטנר אומר תכונה — ענו כן/לא/קצת מיידית',s:'בלי לחשוב!'},
+    {t:'30 שניות: ספרו את כל מקומות הנסיעה שנסעתם ביחד',s:'כל מקום = נקודה'},
+    {t:'30 שניות: בנו סיפור יחד — כל אחד מוסיף מילה אחת בתורו'},
+    {t:'30 שניות: ספרו דברים שאתם מכירים תודה עליהם ביחד'},
+    {t:'30 שניות: הפרטנר אומר שם אוכל — ענו "אוהב/שונא" מיידית',s:'אין "אולי"!'},
+    {t:'30 שניות: ספרו כמה שיותר "פעמים ראשונות" שחוויתם ביחד'},
+  ],
+  z:[
+    {t:'מה הפרטנר יבחר: ים או הרים?',s:'כל אחד כותב בנפרד, ואז גלו! התאמה = +1 בונוס'},
+    {t:'מה הפרטנר שלכם הכי פוחד ממנו?',s:'ניחשו ואז גלו'},
+    {t:'אם הפרטנר יכול לעשות מקצוע אחר, מה זה היה?'},
+    {t:'מה הפרטנר שלכם הכי אוהב בבוקר שבת?',s:'ניחשו ואז השוו'},
+    {t:'מה המדינה שהפרטנר הכי רוצה לבקר בה?'},
+    {t:'אם הפרטנר יכול לקנות דבר אחד ללא הגבלת כסף?',s:'כל אחד כותב, ואז גלו'},
+    {t:'מה הסרט האהוב ביותר על הפרטנר שלכם?'},
+    {t:'מה הפרטנר חולם לעשות בפנסיה?'},
+    {t:'מה הדבר שהפרטנר שלכם הכי גאה בו?',s:'כל אחד עונה ואז מגלים'},
+  ],
+  b:[
+    {t:'בונוס כפול! ספרו 10 דברים שאתם אוהבים אחד בשני — לפחות 3 שהאחר לא ידע!',s:'4 נקודות!'},
+    {t:'בונוס אהבה! אמרו לפרטנר 3 סיבות שאתם שמחים שהוא/היא בחיים שלכם',s:'3 נקודות לכל אחד!'},
+    {t:'בונוס הפתעה! תכננו ביחד תאריך לשבוע הבא — עכשיו ממש!',s:'4 נקודות כשתסיימו'},
+    {t:'בונוס גלוי! כל אחד אומר דבר שרצה לומר לאחר זמן רב ולא אמר',s:'4 נקודות לשניכם'},
+    {t:'בונוס עתיד! ספרו ביחד 5 דברים שאתם מתרגשים לעשות השנה',s:'3 נקודות לשניכם'},
+    {t:'בונוס הכרת תודה! כל אחד אומר 3 דברים שהוא אסיר תודה על הקשר',s:'3 נקודות'},
+  ],
+};
+
+const SPICY={
+  q:[
+    {t:'מה הדבר שהכי מושך אותך בפרטנר מבחינה פיזית?',spicy:true},
+    {t:'מה הדבר שאתה הכי אוהב שהפרטנר עושה — שרק אתם יודעים עליו?',spicy:true},
+    {t:'מה הרגע האינטימי שהכי זכרת מאז שאתם יחד?',spicy:true},
+    {t:'מה הדבר שגורם לך להתאהב מחדש בפרטנר — שוב ושוב?',spicy:true},
+  ],
+  d:[
+    {t:'ספרו אחד לשני "פנטזיה" קטנה שעוד לא שיתפתם',spicy:true},
+    {t:'תנו אחד לשני 30 שניות של תשומת לב מלאה — בלי מגבלות',s:'החליטו ביחד מה "תשומת לב מלאה" אומרת עבורכם',spicy:true},
+    {t:'תארו אחד לשני מה הייתם עושים אם הייתה לכם שעה לבד, ללא הפרעות',spicy:true},
+  ],
+  w:[
+    {t:'היית מעדיף:',o:['לקבל מסאז\' ממושך','לתת מסאז\' ולראות את הפרטנר נרגע'],spicy:true},
+    {t:'היית מעדיף:',o:['חיבוק ממושך של 5 דקות','מבט עמוק בעיניים 60 שניות'],spicy:true},
+  ],
+};
+
+const PENALTIES=[
+  'תן/י מסאז\' כתפיים לפרטנר — 2 דקות מלאות! ⏱',
+  'שניכם שותים! צ\'ייסר, קפה, או כוס מים — לבחירתכם 🥤',
+  'בלי טלפונים ל-10 הדקות הקרובות — שניכם! 📵',
+  'תן/י לפרטנר 5 קומפלימנטים — עכשיו, בלי לחשוב! 💬',
+  'עשו ביחד 15 קפיצות — עכשיו ממש! 🐸',
+  'שרו ביחד 30 שניות של שיר שאתם שניהם אוהבים 🎵',
+  'הפרטנר מחליט מה אוכלים בארוחה הבאה — ואין ויכוחים! 🍽️',
+  '10 שניות חיבוק — ולא מרשים לשחרר לפני כן! 🤗',
+  'כתבו לפרטנר הודעה מתוקה ושלחו אותה עכשיו 💌',
+  'ספרו לפרטנר 3 דברים שאתם מעריכים בו/ה — עכשיו 🌟',
+  'שחקו "אמת" — הפרטנר שואל שאלה אחת שחייבים לענות עליה 🔍',
+  'הפרטנר בוחר את הפעילות לשבוע הבא — ואתם מתחייבים! 📅',
+  'צלמו ביחד סלפי מגוחך ושלחו לחבר משותף 📸',
+  'עשו "high five" 10 פעמים ביחד — בלי לפספס! ✋',
+  'הפרטנר בוחר מה לצפות הלילה — ואין ויכוחים! 🎬',
+  'ספרו אחד לשני דבר שגרם לכם לחייך היום 😊',
+  'עמדו ב-wall-sit ביחד 30 שניות! 💪',
+  'לחצו ידיים ולא מרשים לעזוב עד סיום הסיבוב הבא 🤝',
+];
+
+/* ===== STATE ===== */
+let p=['שחקן 1','שחקן 2'],pts=[0,0],skips=[0,0],streak=[0,0];
+let turn=0,round=0,spinning=false,rot=0;
+let timerInterval=null,curPts=2,hsStarted=false;
+let gameMode='normal',usedCards={},lastPenIdx=-1;
+let confettiRAF=null;
+
+/* ===== UTILS ===== */
+function showSc(id){document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');}
+function setMode(m){gameMode=m;document.getElementById('mode-normal').classList.toggle('active',m==='normal');document.getElementById('mode-spicy').classList.toggle('active',m==='spicy');}
+
+function getCard(type){
+  const pool=[...(CARDS[type]||[])];
+  if(gameMode==='spicy'&&SPICY[type])pool.push(...SPICY[type]);
+  if(!usedCards[type])usedCards[type]=new Set();
+  if(usedCards[type].size>=pool.length)usedCards[type].clear();
+  let idx,tries=0;
+  do{idx=Math.floor(Math.random()*pool.length);tries++;}
+  while(usedCards[type].has(idx)&&tries<30);
+  usedCards[type].add(idx);
+  return pool[idx];
+}
+
+/* ===== TOAST ===== */
+function showToast(msg,type=''){
+  const w=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast'+(type?' '+type:'');
+  t.textContent=msg;
+  w.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},2800);
+}
+
+/* ===== SCORE ANIM ===== */
+function animScore(wrapId,n){
+  const w=document.getElementById(wrapId);if(!w)return;
+  const el=document.createElement('div');el.className='score-anim';el.textContent='+'+n;
+  w.appendChild(el);setTimeout(()=>el.remove(),900);
+}
+
+/* ===== SETUP ===== */
+function goSetup(){
+  stopConfetti();
+  pts=[0,0];skips=[0,0];streak=[0,0];turn=0;round=0;rot=0;spinning=false;usedCards={};
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  showSc('s-setup');
+}
+
+function startGame(){
+  p[0]=document.getElementById('p1n').value.trim()||'שחקן 1';
+  p[1]=document.getElementById('p2n').value.trim()||'שחקן 2';
+  pts=[0,0];skips=[0,0];streak=[0,0];turn=0;round=0;rot=0;usedCards={};
+  buildTrack();updateSB();
+  showSc('s-game');drawWheel(rot);
+  document.getElementById('spin-btn').disabled=false;
+  document.getElementById('landed').textContent='';
+}
+
+/* ===== SCOREBOARD ===== */
+function updateSB(){
+  for(let i=0;i<2;i++){
+    ['ps','cp'].forEach(px=>{
+      const n=document.getElementById(px+(i+1)+'n');
+      const pt=document.getElementById(px+(i+1)+'p');
+      const m=document.getElementById(px+(i+1)+'m');
+      if(n)n.textContent=p[i];
+      if(pt)pt.textContent=pts[i];
+      if(m){
+        let s='';
+        if(skips[i]>0)s+='🐔×'+skips[i];
+        if(streak[i]>=2)s+=(s?' ':'')+'🔥×'+streak[i];
+        m.textContent=s;
+      }
+    });
+    const g=document.getElementById('ps'+(i+1));
+    const c=document.getElementById('cp'+(i+1));
+    const cls='ps'+(turn===i?(i===0?' t1':' t2'):'');
+    if(g)g.className=cls;if(c)c.className=cls;
+  }
+  const tn=document.getElementById('tname');if(tn)tn.textContent=p[turn];
+  const ri=document.getElementById('rinfo');if(ri)ri.textContent='סיבוב '+(round+1)+' מתוך 12';
+}
+
+function buildTrack(){
+  const t=document.getElementById('rtrack');t.innerHTML='';
+  for(let i=0;i<12;i++){const d=document.createElement('div');d.className='rdo'+(i===0?' cur':'');d.id='rd'+i;t.appendChild(d);}
+}
+
+function updateTrack(){
+  for(let i=0;i<12;i++){
+    const d=document.getElementById('rd'+i);if(!d)continue;
+    d.className='rdo';
+    if(i<round)d.classList.add(i%2===0?'p1':'p2');
+    else if(i===round)d.classList.add('cur');
+  }
+}
+
+/* ===== WHEEL ===== */
+function drawWheel(rotation){
+  const canvas=document.getElementById('wc');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,r=cx-6;
+  ctx.clearRect(0,0,W,H);
+  const arc=2*Math.PI/SEGS.length;
+  SEGS.forEach((seg,i)=>{
+    const a=rotation+i*arc-Math.PI/2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,a+arc);ctx.closePath();
+    ctx.fillStyle=seg.bg;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(a+arc/2);ctx.textAlign='center';
+    ctx.font='16px sans-serif';ctx.fillStyle=seg.fg;ctx.fillText(seg.icon,r*.6,2);
+    ctx.font='600 10px sans-serif';ctx.fillText(seg.name,r*.6,16);
+    ctx.restore();
+  });
+  ctx.beginPath();ctx.arc(cx,cy,24,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#ddd';ctx.lineWidth=2;ctx.stroke();
+  ctx.font='16px sans-serif';ctx.textAlign='center';ctx.fillText('♥',cx,cy+6);
+}
+
+function doSpin(){
+  if(spinning)return;spinning=true;
+  document.getElementById('spin-btn').disabled=true;
+  document.getElementById('landed').textContent='';
+  const winner=Math.floor(Math.random()*SEGS.length);
+  const arc=2*Math.PI/SEGS.length;
+  const tMod=((-(winner*arc+arc/2))%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+  const cMod=((rot%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+  let delta=tMod-cMod;if(delta<=.01)delta+=2*Math.PI;
+  const total=(6+Math.random()*4)*2*Math.PI+delta;
+  const s0=rot,s1=rot+total,st=performance.now(),dur=4000;
+  function frame(now){
+    const t=Math.min((now-st)/dur,1);
+    const e=1-Math.pow(1-t,4);
+    rot=s0+e*(s1-s0);drawWheel(rot);
+    if(t<1){requestAnimationFrame(frame);}
+    else{
+      rot=s1;spinning=false;
+      const seg=SEGS[winner];
+      document.getElementById('landed').textContent=seg.icon+' קיבלת: '+seg.name+'!';
+      if(round===11)showToast('⚡ סיבוב אחרון!','warn');
+      setTimeout(()=>showCard(winner),700);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ===== CARD ===== */
+function showCard(wi){
+  const seg=SEGS[wi];curPts=seg.pts;hsStarted=false;
+  const card=getCard(seg.type);
+  updateSB();
+  const crd=document.getElementById('crd');
+  crd.style.borderColor=seg.bg;
+  const spill=card.spicy?'<span class="spicy-pill">🌶️</span>':'';
+  let html=`<span class="cbadge" style="background:${seg.bg};color:${seg.fg}">${spill}${seg.icon} ${seg.name} · ${seg.pts} נקודות</span>`;
+  if(seg.type==='w'&&card.o){
+    html+=`<span class="cicon">⚡</span><div class="ctext">${card.t}</div>`;
+    html+=`<div class="wopts"><div class="wopt">${card.o[0]}</div><div class="vs">— או —</div><div class="wopt">${card.o[1]}</div></div>`;
+    html+=`<div class="csub">כל אחד בוחר בנפרד, ואז גלו ודונו</div>`;
+  } else if(seg.type==='h'){
+    html+=`<span class="cicon">🔥</span><div class="ctext">${card.t}</div>`;
+    if(card.s)html+=`<div class="csub">${card.s}</div>`;
+    html+=`<div class="hs-timer"><svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="36" fill="none" stroke="#f0f0f0" stroke-width="6"/><circle id="tring" cx="42" cy="42" r="36" fill="none" stroke="${seg.bg}" stroke-width="6" stroke-dasharray="226.2" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 42 42)"/></svg><div class="hs-tnum" id="tnum">30</div></div><div class="hs-tsub" id="tsub">לחצו "התחל" להתחיל!</div>`;
+  } else {
+    html+=`<span class="cicon">${seg.icon}</span><div class="ctext">${card.t}</div>`;
+    if(card.s)html+=`<div class="csub">${card.s}</div>`;
+  }
+  crd.innerHTML=html;
+  const db=document.getElementById('doneb');
+  if(seg.type==='h'){
+    db.textContent='התחל טיימר! ⏱';
+    db.onclick=function(){
+      if(!hsStarted){
+        hsStarted=true;this.textContent='סיימתי! ✓ (+'+curPts+')';
+        const sub=document.getElementById('tsub');if(sub)sub.textContent='מהר מהר!';
+        startHSTimer();
+      } else {
+        if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+        resolve(true);
+      }
+    };
+  } else {
+    db.textContent='השלמתי ✓ (+'+seg.pts+')';
+    db.onclick=()=>resolve(true);
+  }
+  showSc('s-card');
+}
+
+function startHSTimer(){
+  let secs=30;
+  timerInterval=setInterval(()=>{
+    secs--;
+    const tn=document.getElementById('tnum');
+    const tr=document.getElementById('tring');
+    if(tn)tn.textContent=secs;
+    if(tr)tr.setAttribute('stroke-dashoffset',226.2*(1-secs/30));
+    if(secs<=0){clearInterval(timerInterval);timerInterval=null;resolve(true);}
+  },1000);
+}
+
+/* ===== SKIP + PENALTY ===== */
+function doSkip(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  skips[turn]++;streak[turn]=0;
+  showPenalty();
+}
+
+function showPenalty(){
+  let idx;let tries=0;
+  do{idx=Math.floor(Math.random()*PENALTIES.length);tries++;}
+  while(idx===lastPenIdx&&tries<20);
+  lastPenIdx=idx;
+  document.getElementById('pen-text').textContent=PENALTIES[idx];
+  const icons=['🐔','🐓','🐣','🐥'];
+  const pi=document.getElementById('pen-icon');
+  pi.textContent=icons[Math.floor(Math.random()*icons.length)];
+  pi.style.animation='none';requestAnimationFrame(()=>{pi.style.animation='';});
+  showSc('s-penalty');
+}
+
+function rerollPenalty(){
+  let idx;let tries=0;
+  do{idx=Math.floor(Math.random()*PENALTIES.length);tries++;}
+  while(idx===lastPenIdx&&tries<20);
+  lastPenIdx=idx;
+  const pt=document.getElementById('pen-text');
+  pt.style.opacity='0';
+  setTimeout(()=>{pt.textContent=PENALTIES[idx];pt.style.opacity='1';},200);
+}
+
+function acceptPenalty(){updateSB();nextTurn();}
+
+/* ===== RESOLVE ===== */
+function resolve(done){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  if(done){
+    pts[turn]+=curPts;
+    streak[turn]++;
+    if(streak[turn]>0&&streak[turn]%3===0){
+      pts[turn]+=1;
+      showToast('🔥 '+p[turn]+' — '+streak[turn]+' ברצף! +1 בונוס!','streak');
+    }
+    const wrapId=turn===0?'pw1':'pw2';
+    animScore(wrapId,curPts);
+  }
+  updateSB();nextTurn();
+}
+
+function nextTurn(){
+  round++;
+  if(round>=12){showResult();return;}
+  turn=1-turn;
+  updateSB();updateTrack();
+  showSc('s-game');drawWheel(rot);
+  document.getElementById('spin-btn').disabled=false;
+  document.getElementById('landed').textContent='';
+}
+
+/* ===== RESULT ===== */
+function showResult(){
+  const w=pts[0]>pts[1]?0:pts[1]>pts[0]?1:-1;
+  document.getElementById('fs1n').textContent=p[0];document.getElementById('fs1p').textContent=pts[0];
+  document.getElementById('fs2n').textContent=p[1];document.getElementById('fs2p').textContent=pts[1];
+  document.getElementById('fs1m').textContent=skips[0]>0?'🐔 דילג/ה '+skips[0]+' פעמים':'✅ אף דילוג!';
+  document.getElementById('fs2m').textContent=skips[1]>0?'🐔 דילג/ה '+skips[1]+' פעמים':'✅ אף דילוג!';
+  document.getElementById('fs1').classList.toggle('win',w===0);
+  document.getElementById('fs2').classList.toggle('win',w===1);
+  if(w===-1){document.getElementById('ric').textContent='🤝';document.getElementById('rt').textContent='תיקו מושלם!';document.getElementById('rs').textContent='כשהאהבה שווה — כולם מנצחים!';}
+  else{document.getElementById('ric').textContent='🏆';document.getElementById('rt').textContent=p[w]+' ניצח/ה!';document.getElementById('rs').textContent='עם '+pts[w]+' נקודות — כל הכבוד!';}
+  showSc('s-result');
+  setTimeout(startConfetti,400);
+}
+
+/* ===== CONFETTI ===== */
+function startConfetti(){
+  const canvas=document.getElementById('confetti-c');
+  canvas.style.display='block';
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const colors=['#D4537E','#EF9F27','#7F77DD','#1D9E75','#FAC775','#378ADD','#E24B4A'];
+  const ps=Array.from({length:90},()=>({
+    x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,
+    w:7+Math.random()*9,h:4+Math.random()*5,
+    vx:(Math.random()-.5)*2.5,vy:2.5+Math.random()*3,
+    angle:Math.random()*Math.PI*2,va:(Math.random()-.5)*.1,
+    color:colors[Math.floor(Math.random()*colors.length)],alpha:1,
+  }));
+  let f=0;
+  function anim(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ps.forEach(q=>{
+      q.x+=q.vx;q.y+=q.vy;q.angle+=q.va;
+      if(q.y>canvas.height){q.y=-10;q.x=Math.random()*canvas.width;}
+      if(f>160)q.alpha=Math.max(0,q.alpha-.008);
+      ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.angle);ctx.globalAlpha=q.alpha;
+      ctx.fillStyle=q.color;ctx.fillRect(-q.w/2,-q.h/2,q.w,q.h);ctx.restore();
+    });
+    f++;
+    if(f<230){confettiRAF=requestAnimationFrame(anim);}
+    else{canvas.style.display='none';}
+  }
+  if(confettiRAF)cancelAnimationFrame(confettiRAF);
+  anim();
+}
+function stopConfetti(){
+  if(confettiRAF){cancelAnimationFrame(confettiRAF);confettiRAF=null;}
+  const c=document.getElementById('confetti-c');if(c)c.style.display='none';
+}
+
+/* ===== INIT ===== */
+drawWheel(0);
+</script>
+</body>
+</html>
